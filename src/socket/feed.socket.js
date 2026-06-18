@@ -1,4 +1,5 @@
 import * as PostsService from "../services/post.service.js";
+import { sanitizeContent } from "../utils/sanitize.js";
 
 const registerFeedEvents = (io, socket) => {
   // user creates post
@@ -7,9 +8,17 @@ const registerFeedEvents = (io, socket) => {
       const content = data.content;
       const tempId = data.tempId; // temporary ID from client for optimistic UI 
 
+      if (!content) {
+        return socket.emit("error", {
+          message: "Content is required"
+        });
+      }
+
+      const safeContent = sanitizeContent(content);
+
       const savedPost = await PostsService.createPost(
         socket.user.id,
-        content
+        safeContent
       );
 
       const payload = {
